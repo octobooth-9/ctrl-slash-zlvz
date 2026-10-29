@@ -106,7 +106,9 @@ const UI = {
     el('over-best').classList.toggle('new', !!r.newBest);
     const stat = (k, v) => `<div>${k}<b>${v}</b></div>`;
     el('over-stats').innerHTML = [stat('SLICED', s.sliced), stat('BEST COMBO', s.maxCombo), stat('HATS', s.hats), stat('WARDROBE', `${r.distinct.length}/17`),
-      stat('SNIPES', s.snipes), stat('SETS · RUNWAYS', `${s.sets} · ${s.runways}`), s.legacy ? stat('LEGACY KILLS', s.legacy) : '', s.crits ? stat('STACK OVERFLOWS', s.crits) : ''].join('');
+      stat('SNIPES', s.snipes), stat('SETS · RUNWAYS', `${s.sets} · ${s.runways}`),
+      stat('CENTER CUTS', s.centers), stat('APEX SLICES', s.apexes), stat('RESCUES', s.rescues), stat('SKILL BONUS PTS', fmt(s.skillPoints)),
+      s.legacy ? stat('LEGACY KILLS', s.legacy) : '', s.crits ? stat('STACK OVERFLOWS', s.crits) : ''].join('');
     el('over-hats').innerHTML = r.distinct.map((id) => hatIco(id, 36)).join('');
     el('over').hidden = false;
     // count-up

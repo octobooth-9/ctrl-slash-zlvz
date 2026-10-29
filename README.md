@@ -22,6 +22,18 @@ Built mobile-first for touch, and it works with a mouse too. The gore is pixel g
 
 A buddy is worth 10 points. Slice 3 or more in one swipe for a combo worth n² × 10, from TRIPLE COMMIT up to SHIPPED TO PROD ON FRIDAY.
 
+Skillful slices now pay extra, even on buddies without hats:
+
+| Bonus | How | Pays |
+|---|---|---|
+| Center | Cut within 10 sprite pixels of the buddy's center (scales with its size) | +15 |
+| Apex | Slice near the top of a jump, while vertical speed is at most 0.6 buddy-heights per second | +20 |
+| Rescue | Slice a falling regular buddy in the bottom buddy-height of the screen, before its center leaves the screen | +30 |
+
+Center can stack with Apex or Rescue. These are additional points, not replacements for the existing buddy score, random Stack Overflow criticals, combos, or hat rewards. Active hat multipliers apply to skill bonuses. Legacy monoliths retain their hit-based scoring; special and Agent-flood buddies cannot earn Rescue.
+
+Labeled popups show which skill bonuses paid and their combined, multiplied points. Pause for the scoring guide; the game-over terminal shows each bonus count and the total skill points earned.
+
 Some buddies wear hats, and hats pay extra:
 
 | Bonus | How | Pays |
@@ -53,6 +65,12 @@ python3 -m http.server 8000
 ```
 
 Then open http://localhost:8000. Pushes to `main` deploy to GitHub Pages through [.github/workflows/pages.yml](.github/workflows/pages.yml).
+
+Run scoring regression checks with Node.js (no dependencies needed):
+
+```sh
+node --test tests/scoring.test.js
+```
 
 ## Code
 

@@ -24,7 +24,8 @@ function newRun(mode) {
     mode, score: 0, strikes: 0, time: 0, left: 60, d: 0, waveT: 0.9, nextLife: 1000,
     hats: {}, distinct: [], mult: 1, multT: 0, multDur: 1, multName: '',
     slowT: 0, frenzyT: 0, frenzySpawn: 0, cause: null, lastTick: 10,
-    stats: { sliced: 0, maxCombo: 0, hats: 0, snipes: 0, sets: 0, runways: 0, crits: 0, bombs: 0, missed: 0, legacy: 0 },
+    stats: { sliced: 0, maxCombo: 0, hats: 0, snipes: 0, sets: 0, runways: 0, crits: 0, bombs: 0, missed: 0, legacy: 0,
+      centers: 0, apexes: 0, rescues: 0, skillPoints: 0 },
   };
 }
 
@@ -35,6 +36,9 @@ function startRun(mode) {
   state = 'play';
   UI.startRun(run);
   banner(mode === 'arcade' ? 'ARCADE' : 'CLASSIC', mode === 'arcade' ? '60s · bombs cost 50 · go' : "3 CI checks · don't touch rm -rf", '#fff', 1.4);
+  after(1.5, () => {
+    if (state === 'play') banner('SLICE WITH STYLE', 'Center +15 · apex +20 · rescue +30', '#4ec9b0', 2);
+  }, true);
   Sfx.combo(2);
 }
 
@@ -92,7 +96,19 @@ function snipeHat(h, a) {
 }
 
 // ---------- Slicing
-function sliceBuddy(b, a, grp) {
+function scoreSliceBonuses(b, cutDistance) {
+  const bonuses = [];
+  if (cutDistance !== null && cutDistance <= 10 * K * b.scale) bonuses.push({ key: 'centers', name: 'CENTER', pts: 15 });
+  if (Math.abs(b.vy) <= S * 0.6) bonuses.push({ key: 'apexes', name: 'APEX', pts: 20 });
+  else if (!b.special && !b.frenzy && b.vy > 0 && b.y >= H - S && b.y < H) bonuses.push({ key: 'rescues', name: 'RESCUE', pts: 30 });
+  if (!bonuses.length) return;
+  for (const bonus of bonuses) run.stats[bonus.key]++;
+  const v = addScore(bonuses.reduce((sum, bonus) => sum + bonus.pts, 0), 0, 0, '', 1, '', true);
+  run.stats.skillPoints += v;
+  popup(b.x, b.y - 64 * K, `${bonuses.map((bonus) => bonus.name).join(' + ')} +${v}`, '#4ec9b0', 0.8);
+}
+
+function sliceBuddy(b, a, grp, cutDistance = null) {
   if (b.special === 'monolith') return monoHit(b, a);
   const i = ents.indexOf(b); if (i < 0) return;
   ents.splice(i, 1);
@@ -106,6 +122,7 @@ function sliceBuddy(b, a, grp) {
   run.stats.sliced++;
   if (Math.random() < 0.05) { run.stats.crits++; addScore(60, b.x, b.y - 20, '#ff4f81', 1.3, 'STACK OVERFLOW '); Sfx.crit(); }
   else addScore(10, b.x, b.y, '#fff');
+  scoreSliceBonuses(b, cutDistance);
   if (b.hat) {
     const t = HAT[b.hat].tier;
     addScore(TIERS[t].pts, b.x, b.y - 36 * K, TIERS[t].color, 1.1 + t * 0.12);
