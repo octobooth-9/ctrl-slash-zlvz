@@ -14,14 +14,21 @@ function segDist(px, py, ax, ay, bx, by) {
 function newGroup() { return { n: 0, hats: [], x: W / 2, y: H / 2, last: 0 }; }
 function localPt(e) { const r = cvs.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 
-function onDown(e) {
-  Sfx.unlock();
-  if (state === 'paused') return;
-  cvs.setPointerCapture?.(e.pointerId);
+function startPointer(e) {
   const [x, y] = localPt(e); const t = performance.now();
   pointers.set(e.pointerId, { pts: [{ x, y, t }], lx: x, ly: y, lt: e.timeStamp || t, sx: x, sy: y, st: t, grp: newGroup(), dist: 0 });
 }
+function onDown(e) {
+  Sfx.unlock();
+  if (state !== 'menu' && state !== 'play') return;
+  if (e.pointerType !== 'mouse') cvs.setPointerCapture?.(e.pointerId);
+  if (!pointers.has(e.pointerId)) startPointer(e);
+  const p = pointers.get(e.pointerId);
+  p.st = performance.now(); p.dist = 0;
+}
 function onMove(e) {
+  if (state !== 'menu' && state !== 'play') { endPointer(e); return; }
+  if (!pointers.has(e.pointerId) && e.pointerType === 'mouse') { startPointer(e); return; }
   const p = pointers.get(e.pointerId); if (!p) return;
   const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
   for (const ev of (evs.length ? evs : [e])) {
@@ -30,17 +37,23 @@ function onMove(e) {
     const d = Math.hypot(x - p.lx, y - p.ly);
     const speed = d / Math.max(ts - p.lt, 4);
     p.dist += d;
-    if (speed > MIN_SPEED && d > 2) { cutAlong(p, p.lx, p.ly, x, y); if (speed > 1.2) Sfx.swoosh(speed); }
+    if (e.pointerType === 'mouse' ? d > 0 : speed > MIN_SPEED && d > 2) { cutAlong(p, p.lx, p.ly, x, y); if (speed > 1.2) Sfx.swoosh(speed); }
     p.pts.push({ x, y, t: performance.now() }); p.lx = x; p.ly = y; p.lt = ts;
   }
 }
 function onUp(e) {
+  endPointer(e, true);
+  if (e.pointerType === 'mouse' && (state === 'menu' || state === 'play')) startPointer(e);
+}
+function endPointer(e, allowTap = false) {
   const p = pointers.get(e.pointerId); if (!p) return;
   pointers.delete(e.pointerId);
   if (p.grp.n) finalizeGroup(p.grp);
   deadTrails.push(p);
-  const [x, y] = localPt(e);
-  if (p.dist < 12 && performance.now() - p.st < 350) tapAt(x, y);
+  if (allowTap && p.dist < 12 && performance.now() - p.st < 350) {
+    const [x, y] = localPt(e);
+    tapAt(x, y);
+  }
 }
 
 function cutAlong(p, ax, ay, bx, by) {
@@ -169,5 +182,7 @@ function drawMenu(now) {
 cvs.addEventListener('pointerdown', onDown);
 cvs.addEventListener('pointermove', onMove);
 cvs.addEventListener('pointerup', onUp);
-cvs.addEventListener('pointercancel', onUp);
+cvs.addEventListener('pointercancel', (e) => endPointer(e));
+cvs.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') endPointer(e); });
+window.addEventListener('blur', () => { for (const pointerId of pointers.keys()) endPointer({ pointerId }); });
 cvs.addEventListener('contextmenu', (e) => e.preventDefault());

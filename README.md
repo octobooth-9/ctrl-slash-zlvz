@@ -42,7 +42,7 @@ Hats you slice are saved to the Hat Rack. The equipped hat shows up 3× more oft
 
 ## Controls
 
-Swipe or drag to slice. On desktop, `1` `2` `3` pick a mode, `P` or `Esc` pauses, `M` mutes, `R` retries.
+Move your mouse across a buddy to slice it, no clicking or dragging needed. On touchscreens, swipe to slice. The same controls select a mode from the menu. On desktop, `1` `2` `3` pick a mode, `P` or `Esc` pauses, `M` mutes, `R` retries.
 
 ## Run locally
 
