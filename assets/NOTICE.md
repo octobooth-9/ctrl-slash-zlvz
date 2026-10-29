@@ -1,6 +1,6 @@
-# Third-party assets
+# Asset notices
 
-The PNG sprite sheets in this folder and in `hats/` are unmodified copies of the chat pet ("Buddy") artwork from Visual Studio Code:
+The PNG sprite sheets in this folder and the PNG hat assets in `hats/` are unmodified copies of the chat pet ("Buddy") artwork from Visual Studio Code:
 
 - Source: https://github.com/microsoft/vscode/tree/main/src/vs/workbench/contrib/chat/browser/widget/media/chatPet
 - License: MIT, https://github.com/microsoft/vscode/blob/main/LICENSE.txt
@@ -30,3 +30,5 @@ SOFTWARE.
 ```
 
 "Visual Studio Code" and "VS Code" are trademarks of Microsoft Corporation. CTRL+SLASH is unofficial fan art. It is not made, affiliated with, or endorsed by Microsoft.
+
+The SVG assets `mushroom-cap.svg`, `graduation-cap.svg`, `ramen-bowl.svg`, `rain-cloud.svg`, and `satellite-dish.svg` are original artwork created for CTRL+SLASH and are not Microsoft assets.

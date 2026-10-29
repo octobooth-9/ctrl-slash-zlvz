@@ -27,7 +27,7 @@ const QUIPS = ['segfault', 'NaN', 'undefined', '404', 'null', 'OOM', 'SIGKILL', 
   'E_BUDDY', 'yeet()', 'free()', 'unlinked', '0xDEAD', 'heap snapshot', 'GC\'d', 'dispose()', 'rm -f', '--force', 'LGTM', 'TODO: grieve'];
 const RIP = ['// rip', '// here lies buddy', '// TODO: unsee', '/* gone */', '// works on my machine', '// @deprecated', '// FIXME', '// git blame me'];
 
-// ---------- Hats (17, straight from the VS Code pet accessory atlases)
+// ---------- Licensed VS Code accessories plus original project-designed hats
 const TIERS = [
   { name: 'COMMON', pts: 25, color: '#9cdcfe', w: 60 },
   { name: 'RARE', pts: 60, color: '#4ec9b0', w: 28 },
@@ -41,8 +41,15 @@ const HATS = [
   ['firefighter-helmet', 'Firefighter Helmet', 1], ['pink-party-hat', 'Pink Party Hat', 1], ['leaning-party-hat', 'Leaning Party Hat', 1],
   ['propeller-hat', 'Propeller Hat', 2], ['full-size-spinner-hat', 'Spinner Hat', 2], ['wizard-hat', 'Wizard Hat', 2],
   ['crown', 'Crown', 3], ['grand-top-hat-monocle', 'Grand Top Hat & Monocle', 3],
-].map(([id, name, tier]) => ({ id, name, tier }));
+  ['mushroom-cap', 'Mushroom Cap', 0, 'mushroom-cap.svg'],
+  ['graduation-cap', 'Graduation Cap', 0, 'graduation-cap.svg'],
+  ['ramen-bowl', 'Ramen Bowl', 1, 'ramen-bowl.svg'],
+  ['rain-cloud', 'Rain Cloud', 1, 'rain-cloud.svg'],
+  ['satellite-dish', 'Satellite Dish', 2, 'satellite-dish.svg'],
+].map(([id, name, tier, asset]) => ({ id, name, tier, asset }));
 const HAT = Object.fromEntries(HATS.map((h) => [h.id, h]));
+const HAT_TOTAL = HATS.length;
+const hatAsset = (id) => `assets/hats/${HAT[id].asset || `${id}.png`}`;
 
 const BLADES = {
   none: { glow: '#3794ff', core: '#eaf6ff', label: 'Default blade' },
@@ -63,6 +70,11 @@ const BLADES = {
   'wizard-hat': { glow: '#a970ff', core: '#f3e8ff', label: 'Arcane' },
   crown: { glow: '#ffd700', core: '#fffbe6', label: 'Royal gold' },
   'grand-top-hat-monocle': { glow: '#c0c0c0', core: '#fff', label: 'Distinguished silver' },
+  'mushroom-cap': { glow: '#e5484d', core: '#fff3d6', label: 'Toadstool' },
+  'graduation-cap': { glow: '#7aa2f7', core: '#eaf6ff', label: 'Dean\'s list' },
+  'ramen-bowl': { glow: '#ff8c3b', core: '#fff0bd', label: 'Noodle run' },
+  'rain-cloud': { glow: '#75beff', core: '#eaf6ff', label: 'Cloudburst' },
+  'satellite-dish': { glow: '#c586c0', core: '#fff', label: 'Uplink' },
 };
 
 // ---------- Sprite animations (frame durations mirror chatPetWidget.ts)
@@ -112,7 +124,7 @@ function loadImg(src) {
 async function loadAssets() {
   const jobs = [];
   for (const A of Object.values(ANIMS)) jobs.push(loadImg(`assets/${A.file}.spritesheet.png`).then((i) => { A.img = i; }));
-  for (const h of HATS) jobs.push(loadImg(`assets/hats/${h.id}.png`).then((i) => { HAT_IMG[h.id] = i; }));
+  for (const h of HATS) jobs.push(loadImg(hatAsset(h.id)).then((i) => { HAT_IMG[h.id] = i; }));
   await Promise.all(jobs);
 }
 
