@@ -14,7 +14,7 @@ const MILESTONES = [
   { n: 3, name: 'HAT TRICK', pts: 150, mult: 2, dur: 8 },
   { n: 6, name: 'FASHIONISTA', pts: 400 },
   { n: 10, name: 'HABERDASHER', pts: 1000, mult: 3, dur: 8 },
-  { n: 17, name: 'FULL WARDROBE', pts: 5000, mult: 3, dur: 12 },
+  { n: HAT_TOTAL, name: 'FULL WARDROBE', pts: 5000, mult: 3, dur: 12 },
 ];
 
 function after(t, fn, real = false) { timers.push({ t, fn, real }); }
@@ -62,7 +62,7 @@ function collectHat(id, x, y) {
   run.hats[id] = (run.hats[id] || 0) + 1; run.stats.hats++;
   const first = !save.hats[id];
   save.hats[id] = (save.hats[id] || 0) + 1;
-  if (first) { UI.toast(`<span class="hat-ico" style="--w:28px;background-image:url(assets/hats/${id}.png)"></span><div><b>New hat discovered</b><br>${HAT[id].name} · ${TIERS[HAT[id].tier].name}</div>`, 'leg'); persist(); }
+  if (first) { UI.toast(`<span class="hat-ico" style="--w:28px;background-image:url(${hatAsset(id)})"></span><div><b>New hat discovered</b><br>${HAT[id].name} · ${TIERS[HAT[id].tier].name}</div>`, 'leg'); persist(); }
   if (!run.distinct.includes(id)) {
     run.distinct.push(id);
     UI.wardrobe(run.distinct, id);
@@ -75,8 +75,8 @@ function milestone(m) {
   const v = addScore(m.pts, 0, 0, '', 1, '', true);
   banner(m.name, `${m.n} different hats · +${fmt(v)}${m.mult ? ` · ×${m.mult} for ${m.dur}s` : ''}`, '#ffd24a', 1.8);
   Sfx.fanfare(); vibrate([20, 40, 20]);
-  confetti(W / 2, H * 0.45, m.n === 17 ? 400 : 120, m.n === 17 ? 1.6 : 1.1);
-  if (m.n === 17) for (let i = 0; i < 6; i++) after(i * 0.25, () => confetti(rand(0, W), TOP, 60, 0.6, 1.2, Math.PI / 2), true);
+  confetti(W / 2, H * 0.45, m.n === HAT_TOTAL ? 400 : 120, m.n === HAT_TOTAL ? 1.6 : 1.1);
+  if (m.n === HAT_TOTAL) for (let i = 0; i < 6; i++) after(i * 0.25, () => confetti(rand(0, W), TOP, 60, 0.6, 1.2, Math.PI / 2), true);
   if (m.mult) setMult(m.mult, m.name, m.dur);
 }
 

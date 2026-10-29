@@ -1,6 +1,6 @@
 # CTRL+SLASH
 
-A Fruit Ninja-style slicer starring Buddy, the pixel pet from VS Code chat, and all 17 of its hats. Swipe to slice. Don't touch `rm -rf`.
+A Fruit Ninja-style slicer starring Buddy, the pixel pet from VS Code chat, and all 22 of its hats. Swipe to slice. Don't touch `rm -rf`.
 
 > Unofficial fan art. Not made, affiliated with, or endorsed by Microsoft or the VS Code team.
 
@@ -30,7 +30,7 @@ Some buddies wear hats, and hats pay extra:
 | Hat snipe | Slice the hat after it pops off | 2× the hat's value |
 | Matching set | Same hat 2+ times in one swipe | hat value × n² |
 | Runway | 3+ different hats in one swipe | 50 × n² |
-| Wardrobe | Distinct hats in one run | 3 = ×2 for 8s, 6 = +400, 10 = ×3, 17 = +5,000 |
+| Wardrobe | Distinct hats in one run | 3 = ×2 for 8s, 6 = +400, 10 = ×3, 22 = +5,000 |
 
 Hats you slice are saved to the Hat Rack. The equipped hat shows up 3× more often and recolors your blade.
 
@@ -69,6 +69,6 @@ Then open http://localhost:8000. Pushes to `main` deploy to GitHub Pages through
 
 ## License
 
-Code is MIT, see [LICENSE](LICENSE). The Buddy and hat sprites come from [microsoft/vscode](https://github.com/microsoft/vscode) under its MIT license, see [assets/NOTICE.md](assets/NOTICE.md).
+Code is MIT, see [LICENSE](LICENSE). The Buddy sprite and 17 of its hats come from [microsoft/vscode](https://github.com/microsoft/vscode) under its MIT license. The five additional hats are original project artwork. See [assets/NOTICE.md](assets/NOTICE.md).
 
 CTRL+SLASH is unofficial fan art and not a Microsoft product. "Visual Studio Code" and "VS Code" are trademarks of Microsoft Corporation.
