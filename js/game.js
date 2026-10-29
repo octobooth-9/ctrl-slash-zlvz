@@ -234,7 +234,13 @@ function spawnBuddy(x0, tx, apex, o = {}) {
   if (b.special === 'monolith') b.scale = 1.7;
   return launch(b, x0, tx, apex, 1 + 0.25 * d);
 }
-function spawnBomb(x0, tx, apex) { return launch(makeBomb(), x0, tx, apex, 1 + 0.25 * (run ? run.d : 0)); }
+function spawnBomb(x0, tx, apex) {
+  if (run && state === 'play') {
+    const cap = run.mode === 'arcade' ? 3 : 2;
+    if (run.time < 10 || run.frenzyT > 0 || ents.filter((e) => e.type === 'bomb').length >= cap) return;
+  }
+  return launch(makeBomb(), x0, tx, apex, 1 + 0.25 * (run ? run.d : 0));
+}
 function slot(bombP) {
   const x0 = rand(W * 0.15, W * 0.85);
   const tx = clamp(x0 + rand(-W * 0.35, W * 0.35), W * 0.1, W * 0.9);
@@ -244,9 +250,10 @@ function slot(bombP) {
 
 function spawnWave() {
   const d = run.d, t = run.time;
-  const bombP = t < 10 ? 0 : lerp(0.08, 0.3, d);
+  const bombP = t < 10 ? 0 : run.mode === 'arcade' ? lerp(0.18, 0.42, d) : lerp(0.12, 0.34, d);
   const hasSpecial = ents.some((e) => e.special) || run.slowT > 0 || run.frenzyT > 0;
   const opts = [['single', 3], ['spread', 3 + d * 3], ['stagger', 2 + d * 2], ['cluster', 1.5 + d * 2]];
+  if (t > 18 && !hasSpecial) opts.push(['bombLanes', 1.8 + d]);
   if (t > 18) opts.push(['hatParade', 0.7]);
   if (t > 28) opts.push(['runway', 0.6]);
   if (t > 40 && d > 0.2) opts.push(['royal', 0.25]);
@@ -263,6 +270,21 @@ function spawnWave() {
       for (let i = 0; i < n; i++) after(i * lerp(0.28, 0.16, d), () => { if (state !== 'play') return; const x = lerp(W * 0.12, W * 0.88, l2r ? i / (n - 1) : 1 - i / (n - 1)); Math.random() < bombP * 0.8 ? spawnBomb(x, x + rand(-40, 40), rand(0.15, 0.35)) : spawnBuddy(x, x + rand(-60, 60), rand(0.15, 0.35)); });
       break; }
     case 'cluster': { const n = randi(3, 5); for (let i = 0; i < n; i++) spawnBuddy(cx + rand(-S * 0.5, S * 0.5), cx + rand(-S, S), rand(0.2, 0.3)); if (Math.random() < bombP * 2) spawnBomb(cx, cx + rand(-S, S), 0.25); break; }
+    case 'bombLanes': {
+      banner('DANGER ZONE', 'slice the middle · avoid the sides', '#f14c4c', 1.3);
+      after(0.65, () => {
+        if (state !== 'play' || run.frenzyT > 0) return;
+        const gap = Math.min(S * 1.5, W * 0.32);
+        const side = Math.random() < 0.5 ? -1 : 1;
+        for (const offset of [-0.18, 0.18]) {
+          const x = W / 2 + offset * S;
+          spawnBuddy(x, x, 0.24);
+        }
+        spawnBomb(W / 2 + side * gap, W / 2 + side * gap, 0.24);
+        if (run.mode === 'arcade' || run.d >= 0.5) spawnBomb(W / 2 - side * gap, W / 2 - side * gap, 0.24);
+      });
+      break;
+    }
     case 'hatParade': { const id = Math.random() < 0.5 && save.equipped ? save.equipped : pickHat(Math.random() < 0.7 ? 0 : 1); const n = randi(3, 4);
       for (let i = 0; i < n; i++) spawnBuddy(cx + (i - (n - 1) / 2) * S * 0.7, cx + (i - (n - 1) / 2) * S * 0.9, 0.24 + rand(-0.02, 0.02), { hat: id });
       popup(cx, H * 0.7, 'HAT PARADE', '#ffd24a', 1); break; }

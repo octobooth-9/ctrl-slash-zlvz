@@ -18,6 +18,13 @@ Built mobile-first for touch, and it works with a mouse too. The gore is pixel g
 - **Classic.** You get 3 CI checks. A buddy that falls off screen "escaped to prod" and costs one. Slicing a bomb ends the run. Every 1,000 points restores a check.
 - **Arcade.** 60 seconds. Bombs cost 50 points. The last 10 seconds are crunch time.
 
+Both modes open with 10 bomb-free seconds, then bomb frequency ramps up, more
+aggressively in Arcade. At most 2 bombs can be airborne in Classic, or 3 in Arcade.
+After 18 seconds, a **DANGER ZONE** warning can announce a lane encounter: slice
+the buddies in the middle and leave the bombs at the sides alone. Classic starts
+with one guarded side and adds the second halfway through its difficulty ramp;
+Arcade guards both sides. Agent mode never launches new bombs.
+
 ## Scoring
 
 A buddy is worth 10 points. Slice 3 or more in one swipe for a combo worth n² × 10, from TRIPLE COMMIT up to SHIPPED TO PROD ON FRIDAY.
@@ -53,6 +60,12 @@ python3 -m http.server 8000
 ```
 
 Then open http://localhost:8000. Pushes to `main` deploy to GitHub Pages through [.github/workflows/pages.yml](.github/workflows/pages.yml).
+
+Run the bomb-spawning and mode-rule regression checks with Node.js 18 or newer:
+
+```sh
+node --test tests/game.test.cjs
+```
 
 ## Code
 
