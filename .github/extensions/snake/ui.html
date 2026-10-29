@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snake</title>
+<style>
+  :root {
+    --bg: var(--background-color-default, #0d1117);
+    --fg: var(--text-color-default, #e6edf3);
+    --muted: var(--text-color-muted, #8b949e);
+    --border: var(--border-color-default, #30363d);
+    --snake: var(--true-color-green, #3fb950);
+    --food: var(--true-color-red, #f85149);
+    --accent: var(--true-color-blue, #2f81f7);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+    font-size: var(--text-body-medium, 14px);
+    display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px;
+    user-select: none; -webkit-user-select: none;
+  }
+  header { width: 100%; max-width: 480px; display: flex; align-items: center; gap: 12px; }
+  h1 { margin: 0; font-size: var(--text-title-medium, 18px); font-weight: var(--font-weight-semibold, 600); flex: 1; }
+  .stat { color: var(--muted); font-family: var(--font-mono, ui-monospace, monospace); }
+  .stat b { color: var(--fg); }
+  .board-wrap { position: relative; width: 100%; max-width: 480px; aspect-ratio: 1; }
+  canvas { width: 100%; height: 100%; display: block; border: 1px solid var(--border); border-radius: 8px; touch-action: none; }
+  .overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: color-mix(in srgb, var(--bg) 78%, transparent); border-radius: 8px; text-align: center;
+  }
+  .overlay[hidden] { display: none; }
+  .overlay h2 { margin: 0; font-size: 22px; }
+  .overlay p { margin: 0; color: var(--muted); }
+  .controls { width: 100%; max-width: 480px; display: flex; gap: 8px; align-items: center; }
+  button, select {
+    font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--color-white, #fff); }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--color-focus-outline, var(--accent)); outline-offset: 1px; }
+  .spacer { flex: 1; }
+  .hint { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🐍 Snake</h1>
+    <span class="stat">Score <b id="score">0</b></span>
+    <span class="stat">Best <b id="best">0</b></span>
+  </header>
+  <div class="board-wrap">
+    <canvas id="board" tabindex="0" aria-label="Snake board"></canvas>
+    <div class="overlay" id="overlay">
+      <h2 id="ov-title">Snake</h2>
+      <p id="ov-text">Arrow keys / WASD or swipe to move</p>
+      <button class="primary" id="ov-btn">Play</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="btn-pause">Pause</button>
+    <button id="btn-new">New game</button>
+    <span class="spacer"></span>
+    <label class="hint" for="speed">Speed</label>
+    <select id="speed">
+      <option value="slow">Slow</option>
+      <option value="normal">Normal</option>
+      <option value="fast">Fast</option>
+    </select>
+  </div>
+  <div class="hint">Space pauses · Enter starts · walls are deadly</div>
+
+<script>
+const N = 20;
+const TICK = { slow: 150, normal: 105, fast: 70 };
+const $ = (id) => document.getElementById(id);
+const cvs = $("board"), g = cvs.getContext("2d");
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+let snake, dir, queue, food, score, status = "idle", speed = "normal", best = 0, timer = null;
+
+function post(path, body) {
+  return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => null);
+}
+function report() { post("/api/status", { status, score, length: snake ? snake.length : 3 }); }
+
+function placeFood() {
+  const free = [];
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) if (!snake.some((s) => s.x === x && s.y === y)) free.push({ x, y });
+  food = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+}
+
+function reset() {
+  const m = Math.floor(N / 2);
+  snake = [{ x: m, y: m }, { x: m - 1, y: m }, { x: m - 2, y: m }];
+  dir = { x: 1, y: 0 }; queue = []; score = 0;
+  placeFood(); $("score").textContent = 0;
+}
+
+function start() {
+  reset(); status = "playing"; showOverlay(null); run(); report(); cvs.focus();
+}
+function run() { clearInterval(timer); timer = setInterval(step, TICK[speed]); }
+
+function togglePause() {
+  if (status === "playing") { status = "paused"; clearInterval(timer); showOverlay("Paused", "Press Space to resume", "Resume"); }
+  else if (status === "paused") { status = "playing"; showOverlay(null); run(); cvs.focus(); }
+  $("btn-pause").textContent = status === "paused" ? "Resume" : "Pause";
+  report(); draw();
+}
+
+async function gameOver() {
+  status = "over"; clearInterval(timer);
+  showOverlay("Game over", `Score ${score}`, "Play again");
+  report(); draw();
+  const r = await post("/api/gameover", { score });
+  if (r && r.newBest) $("ov-text").textContent = `New best: ${score} 🎉`;
+}
+
+function step() {
+  if (queue.length) dir = queue.shift();
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+  const eating = food && head.x === food.x && head.y === food.y;
+  const body = eating ? snake : snake.slice(0, -1);
+  if (head.x < 0 || head.y < 0 || head.x >= N || head.y >= N || body.some((s) => s.x === head.x && s.y === head.y)) return gameOver();
+  snake.unshift(head);
+  if (eating) {
+    score += 10; $("score").textContent = score;
+    if (score > best) $("best").textContent = score;
+    placeFood(); report();
+    if (!food) return gameOver();
+  } else snake.pop();
+  draw();
+}
+
+function turn(x, y) {
+  if (status === "idle" || status === "over") return;
+  const last = queue.length ? queue[queue.length - 1] : dir;
+  if ((x === -last.x && y === -last.y) || (x === last.x && y === last.y)) return;
+  if (queue.length < 3) queue.push({ x, y });
+}
+
+function draw() {
+  const dpr = window.devicePixelRatio || 1;
+  const size = Math.round(cvs.clientWidth * dpr);
+  if (cvs.width !== size) { cvs.width = cvs.height = size; }
+  const c = size / N;
+  g.fillStyle = css("--bg") || "#0d1117"; g.fillRect(0, 0, size, size);
+  g.fillStyle = css("--border") || "#30363d"; g.globalAlpha = 0.35;
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) if ((x + y) % 2) g.fillRect(x * c, y * c, c, c);
+  g.globalAlpha = 1;
+  if (!snake) return;
+  if (food) {
+    g.fillStyle = css("--food") || "#f85149";
+    g.beginPath(); g.arc((food.x + 0.5) * c, (food.y + 0.5) * c, c * 0.38, 0, Math.PI * 2); g.fill();
+  }
+  const sc = css("--snake") || "#3fb950";
+  snake.forEach((s, i) => {
+    g.fillStyle = sc; g.globalAlpha = i === 0 ? 1 : Math.max(0.45, 1 - i / (snake.length * 1.4));
+    const p = c * 0.08;
+    g.beginPath(); g.roundRect(s.x * c + p, s.y * c + p, c - 2 * p, c - 2 * p, c * 0.25); g.fill();
+  });
+  g.globalAlpha = 1;
+  const h = snake[0], ex = dir.y !== 0 ? 0.22 : 0, ey = dir.x !== 0 ? 0.22 : 0;
+  g.fillStyle = css("--bg") || "#0d1117";
+  for (const s of [-1, 1]) {
+    g.beginPath();
+    g.arc((h.x + 0.5 + dir.x * 0.15 + ex * s) * c, (h.y + 0.5 + dir.y * 0.15 + ey * s) * c, c * 0.08, 0, Math.PI * 2);
+    g.fill();
+  }
+}
+
+function showOverlay(title, text, btn) {
+  if (!title) { $("overlay").hidden = true; return; }
+  $("ov-title").textContent = title; $("ov-text").textContent = text; $("ov-btn").textContent = btn;
+  $("overlay").hidden = false;
+}
+
+const KEYS = { arrowup: [0, -1], w: [0, -1], arrowdown: [0, 1], s: [0, 1], arrowleft: [-1, 0], a: [-1, 0], arrowright: [1, 0], d: [1, 0] };
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if (KEYS[k]) { e.preventDefault(); turn(...KEYS[k]); }
+  else if (k === " ") { e.preventDefault(); if (status === "idle" || status === "over") start(); else togglePause(); }
+  else if (k === "enter" && (status === "idle" || status === "over")) { e.preventDefault(); start(); }
+});
+
+let touch = null;
+cvs.addEventListener("pointerdown", (e) => { touch = { x: e.clientX, y: e.clientY }; });
+cvs.addEventListener("pointerup", (e) => {
+  if (!touch) return;
+  const dx = e.clientX - touch.x, dy = e.clientY - touch.y; touch = null;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+  Math.abs(dx) > Math.abs(dy) ? turn(Math.sign(dx), 0) : turn(0, Math.sign(dy));
+});
+
+$("ov-btn").onclick = () => (status === "paused" ? togglePause() : start());
+$("btn-new").onclick = start;
+$("btn-pause").onclick = togglePause;
+$("speed").onchange = (e) => { speed = e.target.value; post("/api/speed", { speed }); if (status === "playing") run(); cvs.focus(); };
+
+const es = new EventSource("/events");
+es.addEventListener("stats", (e) => {
+  const s = JSON.parse(e.data);
+  best = s.highScore; $("best").textContent = Math.max(best, score || 0);
+  if (s.speed !== speed) { speed = s.speed; $("speed").value = speed; if (status === "playing") run(); }
+});
+es.addEventListener("command", (e) => {
+  const c = JSON.parse(e.data);
+  if (c.type === "new_game") start();
+  if (c.type === "toggle_pause") togglePause();
+});
+
+new ResizeObserver(draw).observe(cvs);
+reset(); draw();
+</script>
+</body>
+</html>
