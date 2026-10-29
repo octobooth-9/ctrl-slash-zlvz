@@ -9,6 +9,7 @@ const UI = {
   startRun(r) {
     el('hud').hidden = false; el('menu').hidden = true;
     el('timer').hidden = r.mode !== 'arcade'; el('strikes').hidden = r.mode === 'arcade';
+    el('classic-help').hidden = r.mode !== 'classic';
     el('best').textContent = fmt(save.best[r.mode] || 0);
     this.score(0, true); this.strikes(0); this.timer(60); this.wardrobe([], null); this.mult(r);
     this.modeName = r.mode === 'arcade' ? 'ARCADE' : 'CLASSIC';
