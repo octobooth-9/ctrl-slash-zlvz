@@ -95,7 +95,7 @@ function drawTrails() {
 
 // ---------- Menu rings (slice the buddy inside to choose)
 const menuRings = [
-  { id: 'classic', label: 'CLASSIC', sub: '3 strikes · bombs end it', hat: null, color: '#3794ff' },
+  { id: 'classic', label: 'CLASSIC', sub: '3 strikes or 1 bomb = over\n1,000 pts restores a strike', hat: null, color: '#3794ff' },
   { id: 'arcade', label: 'ARCADE', sub: '60 seconds · pure greed', hat: 'propeller-hat', color: '#ffd24a' },
   { id: 'rack', label: 'HAT RACK', sub: 'equip · blades', hat: 'grand-top-hat-monocle', color: '#c586c0' },
 ];
@@ -105,8 +105,9 @@ let menuAmbient = 1.2, menuBusy = false;
 function layoutRings() {
   const portrait = H > W * 1.1;
   const R = 0.78 * S;
-  const pos = portrait ? [[0.5, 0.52], [0.27, 0.76], [0.73, 0.76]] : [[0.5, 0.62], [0.24, 0.62], [0.76, 0.62]];
-  menuRings.forEach((r, i) => { r.x = W * pos[i][0]; r.y = H * pos[i][1]; r.R = R; });
+  const rowY = Math.min(H * 0.62, H - el('statusbar').offsetHeight - R - 16 - clamp(S * 0.17, 13, 22) - 32);
+  const pos = portrait ? [[0.5, 0.46], [0.27, 0.76], [0.73, 0.76]] : [[0.5, 0.62], [0.24, 0.62], [0.76, 0.62]];
+  menuRings.forEach((r, i) => { r.x = W * pos[i][0]; r.y = portrait ? H * pos[i][1] : rowY; r.R = R; });
   if (portrait && W < 360) { menuRings[1].x = W * 0.25; menuRings[2].x = W * 0.75; }
 }
 function enterMenu() {
@@ -161,7 +162,9 @@ function drawMenu(now) {
     ctx.lineWidth = 4; ctx.strokeStyle = '#111'; ctx.strokeText(r.label, 0, R + 16);
     ctx.fillStyle = '#fff'; ctx.fillText(r.label, 0, R + 16);
     ctx.font = `${Math.round(clamp(S * 0.1, 10, 12))}px "JetBrains Mono", monospace`; ctx.fillStyle = '#8b949e';
-    ctx.fillText(r.sub, 0, R + 16 + clamp(S * 0.17, 13, 22));
+    r.sub.split('\n').forEach((line, i) => {
+      ctx.fillText(line, 0, R + 16 + clamp(S * 0.17, 13, 22) + i * 16);
+    });
     ctx.restore();
   }
 }

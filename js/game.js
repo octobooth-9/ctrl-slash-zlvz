@@ -34,7 +34,7 @@ function startRun(mode) {
   timeScale = targetScale = 1; hitstop = 0;
   state = 'play';
   UI.startRun(run);
-  banner(mode === 'arcade' ? 'ARCADE' : 'CLASSIC', mode === 'arcade' ? '60s · bombs cost 50 · go' : "3 CI checks · don't touch rm -rf", '#fff', 1.4);
+  banner(mode === 'arcade' ? 'ARCADE' : 'CLASSIC', mode === 'arcade' ? '60s · bombs cost 50 · go' : '3 strikes or 1 bomb = over', '#fff', 1.4);
   Sfx.combo(2);
 }
 
@@ -45,7 +45,7 @@ function addScore(p, x, y, color = '#fff', size = 1, label = '', quiet = false) 
   UI.score(run.score);
   if (run.mode === 'classic' && run.strikes > 0 && run.score >= run.nextLife) {
     run.strikes--; run.nextLife += 1000; UI.strikes(run.strikes);
-    UI.toast('✓ CI check fixed — flaky test retried', 'ok');
+    UI.toast('✓ Strike restored — CI check fixed', 'ok');
   }
   while (run.score >= run.nextLife) run.nextLife += 1000;
   return v;

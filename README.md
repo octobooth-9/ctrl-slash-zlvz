@@ -15,7 +15,7 @@ Built mobile-first for touch, and it works with a mouse too. The gore is pixel g
 
 ## Modes
 
-- **Classic.** You get 3 CI checks. A buddy that falls off screen "escaped to prod" and costs one. Slicing a bomb ends the run. Every 1,000 points restores a check.
+- **Classic.** Slice ordinary buddies before they fall off screen. Each missed ordinary buddy adds 1 strike (a failed CI check); at 3 strikes, the run ends. Slicing a bomb labelled `rm -rf` ends the run immediately, regardless of strikes. Every 1,000 points removes 1 strike if you have any; unused restores do not carry over. Pause during a run to review the rules.
 - **Arcade.** 60 seconds. Bombs cost 50 points. The last 10 seconds are crunch time.
 
 ## Scoring

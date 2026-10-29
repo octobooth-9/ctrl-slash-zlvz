@@ -33,7 +33,7 @@
         <div class="best">BEST <b id="best">0</b></div>
       </div>
       <div class="hud-right">
-        <div id="strikes" class="strikes" title="CI checks — lose all three and the build fails">
+        <div id="strikes" class="strikes" title="Miss an ordinary buddy: 1 strike. 3 strikes or 1 bomb ends the run. Every 1,000 points restores a strike.">
           <span class="ci-label">CI</span><i class="ok"></i><i class="ok"></i><i class="ok"></i>
         </div>
         <div id="timer" class="timer" hidden>1:00</div>
@@ -106,6 +106,14 @@
     <div class="panel small">
       <header class="panel-head"><div class="ph-title">⏸ debugger paused</div></header>
       <p class="p-body">The buddies are frozen mid-air, judging you.</p>
+      <div id="classic-help" class="p-body classic-help" hidden>
+        <b>Classic rules</b>
+        <ul>
+          <li>Miss an ordinary buddy: gain 1 strike (a failed CI check). At 3 strikes, the run ends.</li>
+          <li>Slice a bomb labelled <code>rm -rf</code>: the run ends immediately.</li>
+          <li>Every 1,000 points removes 1 strike, if you have any. Unused restores do not carry over.</li>
+        </ul>
+      </div>
       <div class="actions">
         <button class="btn primary" id="btn-resume">▶ Continue <span class="kbd">F5</span></button>
         <button class="btn" id="btn-quit">■ Stop <span class="kbd">⇧F5</span></button>

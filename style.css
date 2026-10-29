@@ -206,6 +206,9 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .ph-title { font-size: 13px; color: #fff; }
 .ph-path { color: var(--dim); }
 .p-body { padding: 14px 14px 0; margin: 0; font-size: 13px; color: var(--fg); }
+.classic-help { line-height: 1.6; }
+.classic-help ul { margin: 8px 0 0; padding-left: 20px; }
+.classic-help li + li { margin-top: 8px; }
 .actions { display: flex; gap: 10px; padding: 14px; flex-wrap: wrap; }
 .btn { flex: 1 1 140px; min-height: 44px; padding: 8px 14px; background: #3a3d41; border: 1px solid #4a4a4a; color: #fff; border-radius: 3px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn:hover { background: #45494e; }
