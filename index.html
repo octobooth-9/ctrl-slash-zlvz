@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e1e1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CTRL+SLASH — a deeply unsafe refactor</title>
+<meta name="description" content="Unofficial fan art: a Fruit Ninja-style slicer starring the VS Code chat pet and its hats. Not affiliated with Microsoft.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><path fill=%22%2323a8f2%22 d=%22M8 3l6 6v4H2V9z%22/><rect x=%225%22 y=%229%22 width=%222%22 height=%222%22/><rect x=%229%22 y=%229%22 width=%222%22 height=%222%22/></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="tabstrip" aria-hidden="true">
+    <span class="tab active"><i class="dot"></i>buddy.slice.ts<b>●</b></span>
+    <span class="tab">hats.json</span>
+    <span class="tab">CHANGELOG.md</span>
+  </div>
+
+  <canvas id="game" aria-label="Game canvas: swipe to slice buddies"></canvas>
+
+  <!-- In-game HUD -->
+  <div id="hud" hidden>
+    <div class="hud-top">
+      <div class="score-block">
+        <div id="score" class="score">0</div>
+        <div class="best">BEST <b id="best">0</b></div>
+      </div>
+      <div class="hud-right">
+        <div id="strikes" class="strikes" title="CI checks — lose all three and the build fails">
+          <span class="ci-label">CI</span><i class="ok"></i><i class="ok"></i><i class="ok"></i>
+        </div>
+        <div id="timer" class="timer" hidden>1:00</div>
+        <button id="btn-pause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 16 16" width="16" height="16"><rect x="3" y="2" width="3.5" height="12" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="wardrobe">
+      <div class="w-label">WARDROBE <b id="w-count">0</b><span>/17</span></div>
+      <div class="w-pips" id="w-pips"></div>
+      <div id="w-hats" class="w-hats"></div>
+    </div>
+    <div id="mult" class="mult" hidden><b>×2</b><span>HAT TRICK</span><i></i></div>
+    <div id="debugbar" class="debugbar" hidden>
+      <span class="db-grip">⋮⋮</span>
+      <svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#89d185"/></svg>
+      <svg viewBox="0 0 16 16"><path d="M2 9a6 6 0 0 1 11-3M13 2v4h-4" stroke="#75beff" stroke-width="1.6" fill="none"/></svg>
+      <svg viewBox="0 0 16 16"><path d="M8 2v9M4 8l4 4 4-4" stroke="#75beff" stroke-width="1.6" fill="none"/><circle cx="8" cy="14" r="1.3" fill="#75beff"/></svg>
+      <svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" fill="#f48771"/></svg>
+      <span class="db-text">Paused on breakpoint</span>
+    </div>
+  </div>
+
+  <!-- Menu overlay (rings are drawn on the canvas) -->
+  <section id="menu" class="menu">
+    <div class="brand">
+      <div class="kicker"><span class="k-file">buddy.slice.ts</span><span class="k-sep">—</span><span class="k-unsaved">● unsaved changes</span></div>
+      <h1 class="title" aria-label="Ctrl plus Slash">
+        <span class="t-ctrl">CTRL</span><span class="t-plus">+</span><span class="t-slash">SLASH</span><span class="caret"></span>
+      </h1>
+      <p class="tag"><span class="c-comment">// no buddies were harmed.</span> <span class="c-comment strong">they were deprecated.</span></p>
+      <p class="fanart">// unofficial fan art · not affiliated with Microsoft</p>
+    </div>
+    <div class="menu-meta">
+      <span>BEST <b id="m-best">0</b></span>
+      <span>HATS <b id="m-hats">0/17</b></span>
+      <span id="m-equip" class="m-equip"></span>
+    </div>
+    <p class="hint">swipe a buddy to pick a mode <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span></p>
+  </section>
+
+  <!-- Hat rack -->
+  <section id="rack" class="panel-wrap" hidden>
+    <div class="panel rack">
+      <header class="panel-head">
+        <div class="ph-title"><span class="ph-path">~/.buddy/</span>hats.json</div>
+        <button class="icon-btn" id="rack-close" aria-label="Close">✕</button>
+      </header>
+      <div class="rack-sub"><b id="rack-count">0/17</b> discovered · tap a hat to equip it</div>
+      <div id="rack-grid" class="rack-grid"></div>
+      <div class="rack-equip" id="rack-equip"></div>
+      <details class="howto" open>
+        <summary>how hats pay out</summary>
+        <ul>
+          <li><b class="t-rare">Slice</b> a hatted buddy → rarity bonus <span class="dim">(25 · 60 · 150 · 400)</span></li>
+          <li><b class="t-epic">Snipe</b> the hat as it flies off → <b>2×</b> bonus</li>
+          <li><b class="t-leg">Matching Set</b> — same hat 2+ times in one swipe → bonus × n²</li>
+          <li><b class="t-common">Runway</b> — 3+ <i>different</i> hats in one swipe</li>
+          <li><b class="t-leg">Wardrobe</b> — distinct hats per run: 3 Hat Trick ×2 · 6 Fashionista · 10 Haberdasher ×3 · 17 Full Wardrobe</li>
+          <li><b class="t-rare">Equipped hat</b> spawns 3× more often and skins your blade</li>
+        </ul>
+        <p class="fanart-note">Unofficial fan art. Buddy and hat sprites © Microsoft, used under the MIT license from microsoft/vscode. Not affiliated with or endorsed by Microsoft.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Pause -->
+  <section id="pause" class="panel-wrap" hidden>
+    <div class="panel small">
+      <header class="panel-head"><div class="ph-title">⏸ debugger paused</div></header>
+      <p class="p-body">The buddies are frozen mid-air, judging you.</p>
+      <div class="actions">
+        <button class="btn primary" id="btn-resume">▶ Continue <span class="kbd">F5</span></button>
+        <button class="btn" id="btn-quit">■ Stop <span class="kbd">⇧F5</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Game over -->
+  <section id="over" class="panel-wrap" hidden>
+    <div class="panel term">
+      <header class="term-head">
+        <span>PROBLEMS <b id="over-problems">3</b></span><span>OUTPUT</span><span class="active">TERMINAL</span><span class="spacer"></span><span class="dim">bash</span>
+      </header>
+      <pre id="over-log" class="term-log"></pre>
+      <div class="over-main">
+        <canvas id="over-buddy" width="96" height="96"></canvas>
+        <div class="over-score">
+          <div class="os-label">SCORE</div>
+          <div id="over-score" class="os-value">0</div>
+          <div id="over-best" class="os-best">BEST 0</div>
+        </div>
+      </div>
+      <div class="over-stats" id="over-stats"></div>
+      <div class="over-hats" id="over-hats"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-retry">git reset --hard <span class="kbd">R</span></button>
+        <button class="btn" id="btn-menu">:q <span class="kbd">Esc</span></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <footer id="statusbar" class="statusbar">
+    <span class="sb-item sb-remote">&gt;&lt;</span>
+    <span class="sb-item"><svg viewBox="0 0 16 16" width="12" height="12"><circle cx="4" cy="3.5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.3"/><circle cx="4" cy="12.5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.3"/><circle cx="12" cy="5.5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.3"/><path d="M4 5.3v5.4M12 7.3c0 3-8 2-8 3.4" stroke="currentColor" fill="none" stroke-width="1.3"/></svg> main*</span>
+    <span class="sb-item" id="sb-problems">⊗ 0 ⚠ 0</span>
+    <span class="sb-item sb-mode" id="sb-mode"></span>
+    <span class="sb-spacer"></span>
+    <span class="sb-item sb-hide-s" id="sb-stats">Ln 1, Col 1</span>
+    <span class="sb-item sb-hide-s">UTF-8</span>
+    <span class="sb-item sb-hide-s">{ } TypeScript</span>
+    <button class="sb-item sb-btn" id="btn-mute" aria-label="Toggle sound">♪ on</button>
+  </footer>
+
+  <div id="loading" class="loading"><div><span>loading buddies</span><i></i><small>unofficial fan art</small></div></div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/game.js"></script>
+<script src="js/input.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
