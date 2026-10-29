@@ -49,8 +49,9 @@ function cutAlong(p, ax, ay, bx, by) {
   if (state === 'paused' || state === 'loading') return;
   for (const o of ents.slice()) {
     if (!o.entered || !ents.includes(o)) continue;
-    if (segDist(o.x, o.y, ax, ay, bx, by) > radiusOf(o)) continue;
-    if (o.type === 'buddy') { sliceBuddy(o, a, state === 'play' ? p.grp : null); p.grp.last = performance.now(); }
+    const cutDistance = segDist(o.x, o.y, ax, ay, bx, by);
+    if (cutDistance > radiusOf(o)) continue;
+    if (o.type === 'buddy') { sliceBuddy(o, a, state === 'play' ? p.grp : null, cutDistance); p.grp.last = performance.now(); }
     else if (o.type === 'bomb') { if (state === 'play' || state === 'menu') hitBomb(o); }
     else if (o.type === 'hat') snipeHat(o, a);
   }
